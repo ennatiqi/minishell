@@ -46,49 +46,36 @@ char	*path_finder(char *cmd, t_envp_node *envp)
 	free_split(path);
 	return (0);
 }
-
-void red_in_last(t_redirection		**list_reds, int *fd)
+void red_in_last(t_redirection        **list_reds, int *fd)
 {
-	int i = 0;
-	int t = -1;
-	while(list_reds[i])
-	{
-		if (list_reds[i]->type == OUTPUT)
-			t = fd[i];
-		if (list_reds[i]->type == APPEND)
-			t = fd[i];
-		i++;
-	}
-	if (t != -1)
-		dup2(t, 1);
-	i = 0;
-	while(list_reds[i])
-	{
-		close(fd[i]);
-		i++;
-	}
+    int i = 0;
+    int t = -1;
+    while(list_reds[i])
+    {
+				if (list_reds[i]->type == OUTPUT)
+					t = fd[i];
+				if (list_reds[i]->type == APPEND)
+					t = fd[i];
+        i++;
+    }
+    if (t != -1)
+        dup2(t, 1);
 }
-void red_out_last(t_redirection		**list_reds, int *fd)
+void red_out_last(t_redirection        **list_reds, int *fd)
 {
-	int i = 0;
-	int t = -1;
+    int i = 0;
+    int t = -1;
 
-	while(list_reds[i])
-	{
-		if (list_reds[i]->type == INPUT)
-			t = fd[i];
-		if (list_reds[i]->type == HEREDOC)
-			t = fd[i];
-		i++;
-	}
-	if (t != -1)
-		dup2(t, 0);
-	i = 0;
-	while(list_reds[i])
-	{
-		close(fd[i]);
-		i++;
-	}
+    while(list_reds[i])
+    {
+        if (list_reds[i]->type == INPUT)
+            t = fd[i];
+        if (list_reds[i]->type == HEREDOC)
+            t = fd[i];
+        i++;
+    }
+    if (t != -1)
+        dup2(t, 0);
 }
 
 int splcount(t_redirection **list_reds)
@@ -108,23 +95,28 @@ int redirect_in_out(t_redirection **list_reds)
 	fd = malloc(splcount(list_reds) * sizeof(int));
 	while(list_reds[i])
 	{
-		if (list_reds[i]->type == OUTPUT)
+		if (char_in_str(list_reds[i]->value, '\"') && char_in_str(list_reds[i]->value, ' '))
+			printf("%s: ambiguous redirect", list_reds[i]->value);
+		else
 		{
-			fd[i] = redirect_in_file(list_reds[i]->value);
-			if (fd[i] < 0)
-				return 1;
-		}
-		if (list_reds[i]->type == APPEND)
-		{
-			fd[i] = redirect_in_file_append(list_reds[i]->value);
-			if (fd[i] < 0)
-				return 1;
-		}
-		if (list_reds[i]->type == INPUT)
-		{
-			fd[i] = redirect_out_file(list_reds[i]->value);
-			if (fd[i] < 0)
-				return 1;
+			if (list_reds[i]->type == OUTPUT)
+			{
+				fd[i] = redirect_in_file(list_reds[i]->value);
+				if (fd[i] < 0)
+					return 1;
+			}
+			if (list_reds[i]->type == APPEND)
+			{
+				fd[i] = redirect_in_file_append(list_reds[i]->value);
+				if (fd[i] < 0)
+					return 1;
+			}
+			if (list_reds[i]->type == INPUT)
+			{
+				fd[i] = redirect_out_file(list_reds[i]->value);
+				if (fd[i] < 0)
+					return 1;
+			}
 		}
 		if (list_reds[i]->type == HEREDOC)
 		{
@@ -141,46 +133,42 @@ int redirect_in_out(t_redirection **list_reds)
 
 void	cmd_not_found(char **cmd)
 {
-	write(2, cmd[0], ft_strlen(cmd[0]));
-	write(2, ": command not found\n", 20);
+	// write(2, cmd[0], ft_strlen(cmd[0]));
+	write(2, "minishell : command not found\n", 31);
+	// perror("minishell :");
 	free_split(cmd);
 	exit (127);
 }
 
 void    ex_main(t_token_lst *token1, t_token_lst *token2)
 {
-	int 	a1;
 	int		fd[2];
 	char **str;
 	t_redirection **list_reds;
 
     pipe(fd);		
 	gstruct->stout = dup2(fd[1], 1);
-
 	close(fd[1]);
 	str = create_lst_commands(token1);
 	list_reds = create_lst_redirections(token1);
-	if (redirect_in_out(list_reds))
+	int a1;
+	signal(SIGINT, &sigint_hander_executor);
+	a1 = fork();
+	if (a1 == 0)
 	{
-		printf("minishell: asd: No such file or directory\n");
-		return ;
-	}
-
-	if(is_builtin(str[0]))
-		handle_builtin(str);
-	else
-	{	
-		a1 = fork();
-		if (a1 == 0)
+		if(is_builtin(str[0]))
 		{
-			close(fd[0]);
-			if (str[0] && path_finder(str[0], gstruct->envp_head))
-				execve(path_finder(str[0], gstruct->envp_head), str, NULL);
-			else
-				cmd_not_found(str);
+			handle_builtin(str);
+			exit(gstruct->exit_status);
 		}
-
+		if (redirect_in_out(list_reds))
+			exit(gstruct->exit_status);
+		if (str[0] && path_finder(str[0], gstruct->envp_head))
+			execve(path_finder(str[0], gstruct->envp_head), str, get_envp_arr());
+		else
+			cmd_not_found(str);
 	}
+	waitpid(a1, &gstruct->exit_status, 0);
 	gstruct->stin = dup2(fd[0], 0);
 	close(fd[0]);
 	executor(token2);
