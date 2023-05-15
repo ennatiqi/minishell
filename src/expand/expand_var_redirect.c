@@ -1,39 +1,46 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   expand_var.c                                       :+:      :+:    :+:   */
+/*   expand_var_redirect.c                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: kboughal < kboughal@student.1337.ma>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/05/04 19:24:48 by kboughal          #+#    #+#             */
-/*   Updated: 2023/05/09 21:31:43 by kboughal         ###   ########.fr       */
+/*   Created: 2023/05/04 19:31:42 by kboughal          #+#    #+#             */
+/*   Updated: 2023/05/09 21:34:11 by kboughal         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../minishell.h"
 
-void	expand_variables_core(char **original, t_trim trim, t_envp_node *tmp)
+char	*trim_str(char *str)
 {
 	int		i;
-	char	*trimed;
+	int		j;
+	int		k;
+	char	*new_str;
 
-	i = -1;
-	trimed = NULL;
-	if (trim)
+	if (!str)
+		return (NULL);
+	i = 0;
+	k = 0;
+	j = ft_strlen(str) - 1;
+	while (str[i] && str[i] == ' ')
+		i++;
+	while (j >= 0 && j >= i && str[j] == ' ')
+		j--;
+	new_str = (char *)malloc(sizeof(char) * (j - i + 10));
+	k = 0;
+	while (str[i] && i <= j)
 	{
-		trimed = epur_str(tmp->value);
-		while (trimed[++i])
-			cbc_str_join(original, trimed[i]);
-		free(trimed);
+		new_str[k] = str[i];
+		i++;
+		k++;
 	}
-	else
-	{
-		while (tmp->value[++i])
-			cbc_str_join(original, tmp->value[i]);
-	}
+	new_str[k] = '\0';
+	return (new_str);
 }
 
-void	expand_variables(char **original, char	*copy, t_trim trim)
+void	expand_variables_redirect(char **original, char	*copy)
 {
 	t_envp_node	*tmp;
 	int			i;
@@ -48,7 +55,11 @@ void	expand_variables(char **original, char	*copy, t_trim trim)
 	{
 		tmp = envp_find_node(&(copy[1]), get_variable_len(&(copy[1])), \
 		g_struct->envp_head);
-		if (tmp)
-			expand_variables_core(original, trim, tmp);
+		if (tmp && tmp->value)
+		{
+			i = -1;
+			while (tmp->value[++i])
+				cbc_str_join(original, tmp->value[i]);
+		}
 	}
 }

@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   utils.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: rennatiq <rennatiq@student.1337.ma>        +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2023/04/14 16:48:55 by kboughal          #+#    #+#             */
+/*   Updated: 2023/05/10 19:00:27 by rennatiq         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../../minishell.h"
 
 void	free_split(char **list)
@@ -10,6 +22,16 @@ void	free_split(char **list)
 	free(list);
 }
 
+void	free_args(t_token_lst *current, char **list)
+{
+	int	i;
+
+	i = -1;
+	while (++i < current->token->num_args)
+		free(list[i]);
+	free(list);
+}
+
 int	is_part_of_list(char c, char *list)
 {
 	size_t	i;
@@ -17,13 +39,24 @@ int	is_part_of_list(char c, char *list)
 	i = 0;
 	while (i < ft_strlen(list))
 	{
-		if(list[i] == c)
+		if (list[i] == c)
 			return (1);
 		i++;
 	}
 	return (0);
 }
 
+int	two_d_array_len(char **arr)
+{
+	int	i;
+
+	i = 0;
+	if (!arr)
+		return (0);
+	while (arr[i])
+		i++;
+	return (i);
+}
 
 int	ft_strlcmp(const char *s1, const char *s2)
 {
@@ -36,37 +69,9 @@ int	ft_strlcmp(const char *s1, const char *s2)
 	i = 0;
 	l1 = get_variable_len((char *)s1);
 	l2 = get_variable_len((char *)s2);
-	if(l1 != l2)
+	if (l1 != l2)
 		return (1);
 	while (s1[i] == s2[i] && s1[i] != '\0')
 		i++;
 	return ((unsigned char)s1[i] - (unsigned char)s2[i]);
-}
-
-int	check_str(char *str)
-{
-	if(!str || !str[0] || str[0] == '\n')
-		return (0);
-	return (1);
-}
-
-//this function find the key you are looking for in envp and creates a new string with the value of the key 
-char	*create_envp_value(char *key)
-{
-	char		*full_path;
-	t_envp_node	*envp_ptr;
-
-	envp_ptr = gstruct->envp_head;
-	full_path = NULL;
-	while (envp_ptr)
-	{
-		if(!strncmp(key, envp_ptr->key, 4))
-		{
-			full_path = (char *)malloc(sizeof(char) * ft_strlen(envp_ptr->value) + 1);
-			ft_strlcpy(full_path, envp_ptr->value, ft_strlen(envp_ptr->value) + 1);
-			break;
-		}
-		envp_ptr = envp_ptr->next;
-	}
-	return (full_path);
 }

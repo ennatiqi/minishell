@@ -1,31 +1,41 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   sig_handler.c                                      :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: rennatiq <rennatiq@student.1337.ma>        +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2023/04/14 16:42:31 by kboughal          #+#    #+#             */
+/*   Updated: 2023/05/10 19:02:38 by rennatiq         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../../minishell.h"
 
 void	sigint_hander(int sig)
-{    
+{
 	(void)sig;
-	printf("\n");
+	ft_printf("\n");
 	rl_on_new_line();
 	rl_replace_line("", 0);
 	rl_redisplay();
 }
 
 void	sigint_hander_executor(int sig)
-{    
+{
 	(void)sig;
-	dup2(gstruct->ppout, 1);
-	dup2(gstruct->ppin, 0);
-	printf("\n");
+	dup2(g_struct->ppout, 1);
+	dup2(g_struct->ppin, 0);
+	ft_printf("\n");
 	rl_on_new_line();
 	rl_replace_line("", 0);
-	// rl_redisplay();
+	rl_redisplay();
 }
 
 void	sigquit_hander(int sig)
 {
-	printf("heeeeeeeeeeeeeeeeeeeeeeeeeeelp\n");
-	free_all();
+	(void)sig;
+	rl_on_new_line();
+	rl_replace_line("", 0);
+	rl_redisplay();
 }
-
-
-
-//205,558 bytes in 274 blocks
